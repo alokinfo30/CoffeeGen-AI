@@ -1,0 +1,6 @@
+{
+  "name": "Coffee Shop AI Agent",
+  "description": "Personalized coffee shop AI assistant powered by Google Agent Development Kit (ADK), RAG vector retrieval, and Gemini API on Cloud Run.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

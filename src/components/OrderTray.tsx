@@ -11,6 +11,7 @@ import {
   X
 } from 'lucide-react';
 import { CartItem, CustomerProfile, OrderDraft } from '../types';
+import { api } from '../utils/apiClient';
 
 interface OrderTrayProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ interface OrderTrayProps {
   onRemoveItem: (cartItemId: string) => void;
   onClearCart: () => void;
   onSubmitOrder: (order: OrderDraft) => void;
+  onOpenCustomizer: (item: any, customization: any) => void;
 }
 
 export const OrderTray: React.FC<OrderTrayProps> = ({
@@ -31,11 +33,12 @@ export const OrderTray: React.FC<OrderTrayProps> = ({
   onUpdateQuantity,
   onRemoveItem,
   onClearCart,
-  onSubmitOrder
+  onSubmitOrder,
+  onOpenCustomizer
 }) => {
-  const [applyPointsDiscount, setApplyPointsDiscount] = useState(false);
   const [orderNotes, setOrderNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [applyPointsDiscount, setApplyPointsDiscount] = useState(false);
 
   if (!isOpen) return null;
 
@@ -51,47 +54,17 @@ export const OrderTray: React.FC<OrderTrayProps> = ({
 
     setIsSubmitting(true);
     try {
-      let data;
-      try {
-        const response = await fetch('/api/order/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            customerId: customer.id,
-            customerName: customer.name,
-            items,
-            subtotal,
-            discount,
-            tax,
-            total,
-            notes: orderNotes
-          })
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const contentType = response.headers.get('content-type') || '';
-        if (!contentType.includes('application/json')) throw new Error('Non-JSON');
-        data = await response.json();
-      } catch {
-        // Fallback client-side simulated order confirmation
-        data = {
-          success: true,
-          order: {
-            id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-            customerName: customer.name,
-            items,
-            subtotal,
-            discount,
-            tax,
-            total,
-            pointsEarned,
-            status: 'grinding_beans',
-            estimatedMinutes: 4,
-            createdAt: new Date().toISOString()
-          }
-        };
-      }
+      const data = await api.submitOrder({
+        customer,
+        items,
+        subtotal,
+        discount,
+        tax,
+        total,
+        notes: orderNotes
+      });
 
-      if (data && data.success && data.order) {
+      if (data?.success && data?.order) {
         onSubmitOrder(data.order);
         onClearCart();
         onClose();

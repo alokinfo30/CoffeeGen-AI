@@ -25,6 +25,7 @@ import {
   CartItem,
   CustomizationState
 } from '../types';
+import { api } from '../utils/apiClient';
 
 interface ChatInterfaceProps {
   activeProfile: CustomerProfile;
@@ -108,52 +109,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setIsLoading(true);
 
     try {
-      let data;
-      try {
-        const res = await fetch('/api/agent/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: query,
-            customerProfileId: activeProfile.id,
-            environmentContext: env,
-            conversationHistory: messages.slice(-4).map((m) => ({
-              sender: m.sender === 'agent' ? 'agent' : 'user',
-              text: m.text
-            }))
-          })
-        });
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const contentType = res.headers.get('content-type') || '';
-        if (!contentType.includes('application/json')) throw new Error('Non-JSON response');
-        data = await res.json();
-      } catch {
-        // Fallback grounded local response tailored to customer's dietary profile
-        const matchingItems = menuItems.filter((item) => {
-          if (activeProfile.dietaryRestrictions.includes('dairy-free') && item.allergens.some((a) => a.toLowerCase().includes('dairy') || a.toLowerCase().includes('milk'))) return false;
-          if (activeProfile.dietaryRestrictions.includes('keto') && item.calories > 150) return false;
-          if (activeProfile.caffeineTolerance === 'none' && item.caffeineMg > 25) return false;
-          return true;
-        }).slice(0, 2);
-
-        const recItem = matchingItems[0] || menuItems[0];
-
-        data = {
-          replyText: `Hello ${activeProfile.name}! For this ${env.timeOfDay}, I recommend our signature ${recItem.name}. Tailored to your preference for ${activeProfile.milkPreference} and ${activeProfile.favoriteFlavorNotes.slice(0, 2).join(' & ')} flavor profile!`,
-          recommendedItems: matchingItems.length > 0 ? matchingItems : [menuItems[0]],
-          actionSuggestion: `Customize with ${activeProfile.milkPreference} (${activeProfile.sweetnessPreference})`,
-          adkTrace: [
-            { stage: 'planner', status: 'completed', durationMs: 14, summary: `Extracted persona: ${activeProfile.name} • ${env.timeOfDay} • Dietary: ${activeProfile.dietaryRestrictions.join(', ') || 'Standard'}` },
-            { stage: 'rag_retrieval', status: 'completed', durationMs: 22, summary: `Matched RAG flavor chemistry for ${activeProfile.favoriteFlavorNotes.join(', ')}` },
-            { stage: 'tool_execution', status: 'completed', durationMs: 9, summary: `Validated allergen safety for ${recItem.name}` },
-            { stage: 'synthesis', status: 'completed', durationMs: 31, summary: `Synthesized grounded barista pairing recommendation` }
-          ],
-          ragSources: [
-            { id: 'rag-grounded-1', title: `${recItem.name} Extraction Profile`, similarity: 0.96, snippet: `Artisan handcrafted with ${activeProfile.milkPreference}` }
-          ]
-        };
-      }
+      const data = await api.sendAgentChat({
+        message: query,
+        activeProfile,
+        env,
+        conversationHistory: messages.slice(-4).map((m) => ({
+          sender: m.sender === 'agent' ? 'agent' : 'user',
+          text: m.text
+        }))
+      });
 
       const agentMessage: ChatMessage = {
         id: `agent-${Date.now()}`,

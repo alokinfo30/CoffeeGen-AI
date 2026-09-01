@@ -1,5 +1,5 @@
 import React from 'react';
-import { Coffee, Activity, Sparkles, ShoppingBag, Sun, Moon, CloudSun, ShieldCheck, Terminal, Award } from 'lucide-react';
+import { Coffee, Activity, Sparkles, ShoppingBag, Sun, Moon, CloudSun, ShieldCheck, Terminal, Award, BookOpen } from 'lucide-react';
 import { EnvironmentContext, CustomerProfile } from '../types';
 import { AmbientSoundPlayer } from './AmbientSoundPlayer';
 
@@ -10,6 +10,7 @@ interface NavbarProps {
   onOpenKnowledge: () => void;
   onOpenArch: () => void;
   onOpenLoyalty?: () => void;
+  onOpenGuide?: () => void;
   activeProfile?: CustomerProfile | null;
   env: EnvironmentContext;
   onUpdateEnv: (newEnv: EnvironmentContext) => void;
@@ -22,6 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenKnowledge,
   onOpenArch,
   onOpenLoyalty,
+  onOpenGuide,
   activeProfile,
   env,
   onUpdateEnv
@@ -113,11 +115,24 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="font-mono text-[11px]">ADK Trace</span>
           </button>
 
+          {/* User & Feature Guide */}
+          {onOpenGuide && (
+            <button
+              onClick={onOpenGuide}
+              id="btn-open-guide"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-linear-to-r from-amber-500/15 to-orange-500/15 hover:from-amber-500/25 hover:to-orange-500/25 text-amber-300 border border-amber-500/30 text-xs font-semibold transition hover:border-amber-400/50 shadow-sm cursor-pointer"
+              title="Open Complete User & Feature Guide"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-[11px]">Guide</span>
+            </button>
+          )}
+
           {/* RAG Knowledge base */}
           <button
             onClick={onOpenKnowledge}
             id="btn-open-knowledge"
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-white/[0.08] text-xs font-medium transition hover:text-white"
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-white/[0.08] text-xs font-medium transition hover:text-white cursor-pointer"
             title="View grounded coffee knowledge chunks and agronomy notes"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />

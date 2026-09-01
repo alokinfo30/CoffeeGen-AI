@@ -2,6 +2,8 @@
 
 > An enterprise-grade, full-stack specialty coffee application powered by **Agent Development Kit (ADK) multi-stage reasoning**, **Retrieval-Augmented Generation (RAG)**, **Procedural Web Audio Ambient Acoustics**, and **Defense-in-Depth AI Security**.
 
+📚 **[Click Here for the Complete User & Feature Guide (USER_GUIDE.md)](./USER_GUIDE.md)** for step-by-step walkthroughs of every feature.
+
 ---
 
 ## 🌟 Highlights & Key Features

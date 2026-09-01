@@ -33,6 +33,9 @@ import { AdkTraceInspector } from './components/AdkTraceInspector';
 import { RagKnowledgeViewer } from './components/RagKnowledgeViewer';
 import { ArchitectureInfoModal } from './components/ArchitectureInfoModal';
 import { LoyaltyTrackerWidget } from './components/LoyaltyTrackerWidget';
+import { UserGuideModal } from './components/UserGuideModal';
+
+import { api } from './utils/apiClient';
 
 export default function App() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>(MENU_ITEMS);
@@ -47,6 +50,7 @@ export default function App() {
   const [isKnowledgeOpen, setIsKnowledgeOpen] = useState(false);
   const [isArchOpen, setIsArchOpen] = useState(false);
   const [isLoyaltyOpen, setIsLoyaltyOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [customizingItem, setCustomizingItem] = useState<{
     item: MenuItem;
     initialCustomization?: Partial<CustomizationState>;
@@ -276,6 +280,7 @@ export default function App() {
         onOpenKnowledge={() => setIsKnowledgeOpen(true)}
         onOpenArch={() => setIsArchOpen(true)}
         onOpenLoyalty={() => setIsLoyaltyOpen(true)}
+        onOpenGuide={() => setIsGuideOpen(true)}
         activeProfile={activeProfile}
         env={env}
         onUpdateEnv={setEnv}
@@ -474,7 +479,16 @@ export default function App() {
         onClose={() => setIsArchOpen(false)}
       />
 
-      {/* 12. Toast Notification */}
+      {/* 12. Interactive User & Feature Guide Modal */}
+      <UserGuideModal
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+        onOpenTrace={() => setIsTraceOpen(true)}
+        onOpenKnowledge={() => setIsKnowledgeOpen(true)}
+        onOpenLoyalty={() => setIsLoyaltyOpen(true)}
+      />
+
+      {/* 13. Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-5 right-5 z-50 bg-zinc-900/95 backdrop-blur-xl text-white font-medium text-xs px-4 py-3 rounded-2xl shadow-2xl border border-amber-500/40 animate-in fade-in slide-in-from-bottom-2 duration-150 flex items-center gap-2.5 shadow-amber-500/10">
           <Sparkles className="w-4 h-4 text-amber-400" />

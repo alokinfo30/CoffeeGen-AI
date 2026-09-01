@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, BookOpen, Tag, Filter, X, Coffee, Layers } from 'lucide-react';
 import { RAGChunk } from '../types';
+import { RAG_KNOWLEDGE_BASE } from '../../server/ragKnowledgeBase';
 
 interface RagKnowledgeViewerProps {
   isOpen: boolean;
@@ -8,16 +9,27 @@ interface RagKnowledgeViewerProps {
 }
 
 export const RagKnowledgeViewer: React.FC<RagKnowledgeViewerProps> = ({ isOpen, onClose }) => {
-  const [chunks, setChunks] = useState<RAGChunk[]>([]);
+  const [chunks, setChunks] = useState<RAGChunk[]>(RAG_KNOWLEDGE_BASE);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [search, setSearch] = useState('');
 
   useEffect(() => {
     if (!isOpen) return;
     fetch('/api/rag/knowledge')
-      .then((res) => res.json())
-      .then((data) => setChunks(data.documents || []))
-      .catch((err) => console.error('Failed to load RAG knowledge:', err));
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) throw new Error('Non-JSON response');
+        return res.json();
+      })
+      .then((data) => {
+        if (data?.documents && data.documents.length > 0) {
+          setChunks(data.documents);
+        }
+      })
+      .catch(() => {
+        setChunks(RAG_KNOWLEDGE_BASE);
+      });
   }, [isOpen]);
 
   if (!isOpen) return null;

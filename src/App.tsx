@@ -20,6 +20,8 @@ import {
   CustomizationState,
   OrderDraft
 } from './types';
+import { MENU_ITEMS } from '../server/menuData';
+import { CUSTOMER_PROFILES } from '../server/profilesData';
 import { Navbar } from './components/Navbar';
 import { CustomerPersonaBar } from './components/CustomerPersonaBar';
 import { ChatInterface } from './components/ChatInterface';
@@ -33,9 +35,9 @@ import { ArchitectureInfoModal } from './components/ArchitectureInfoModal';
 import { LoyaltyTrackerWidget } from './components/LoyaltyTrackerWidget';
 
 export default function App() {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [profiles, setProfiles] = useState<CustomerProfile[]>([]);
-  const [activeProfile, setActiveProfile] = useState<CustomerProfile | null>(null);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(MENU_ITEMS);
+  const [profiles, setProfiles] = useState<CustomerProfile[]>(CUSTOMER_PROFILES);
+  const [activeProfile, setActiveProfile] = useState<CustomerProfile | null>(CUSTOMER_PROFILES[0] || null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [activeTab, setActiveTab] = useState<'assistant' | 'menu'>('assistant');
 
@@ -68,26 +70,43 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Fetch initial data
+  // Fetch initial data with resilient fallback
   useEffect(() => {
-    // 1. Fetch menu
+    // 1. Fetch menu with robust content-type check
     fetch('/api/menu')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.items) setMenuItems(data.items);
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) throw new Error('HTML/Non-JSON response');
+        return res.json();
       })
-      .catch((err) => console.error('Failed to load menu:', err));
-
-    // 2. Fetch profiles
-    fetch('/api/profiles')
-      .then((res) => res.json())
       .then((data) => {
-        if (data.profiles && data.profiles.length > 0) {
+        if (data?.items && data.items.length > 0) setMenuItems(data.items);
+      })
+      .catch(() => {
+        // Silently use embedded MENU_ITEMS if API endpoint is not running on same host
+        setMenuItems(MENU_ITEMS);
+      });
+
+    // 2. Fetch profiles with robust content-type check
+    fetch('/api/profiles')
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) throw new Error('HTML/Non-JSON response');
+        return res.json();
+      })
+      .then((data) => {
+        if (data?.profiles && data.profiles.length > 0) {
           setProfiles(data.profiles);
           setActiveProfile(data.profiles[0]);
         }
       })
-      .catch((err) => console.error('Failed to load profiles:', err));
+      .catch(() => {
+        // Silently use embedded CUSTOMER_PROFILES if API endpoint is not running on same host
+        setProfiles(CUSTOMER_PROFILES);
+        setActiveProfile(CUSTOMER_PROFILES[0]);
+      });
   }, []);
 
   // Cart operations

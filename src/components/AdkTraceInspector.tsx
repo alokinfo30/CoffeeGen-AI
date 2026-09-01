@@ -13,7 +13,6 @@ import {
   Code
 } from 'lucide-react';
 import { CustomerProfile, EnvironmentContext, RAGChunk } from '../types';
-import { api } from '../utils/apiClient';
 
 interface AdkTraceInspectorProps {
   isOpen: boolean;
@@ -38,11 +37,17 @@ export const AdkTraceInspector: React.FC<AdkTraceInspectorProps> = ({
     if (!testQuery.trim()) return;
     setIsSearching(true);
     try {
-      const results = await api.searchRag(testQuery, {
-        customerProfile: activeProfile,
-        excludeAllergens: activeProfile.allergies
+      const res = await fetch('/api/rag/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: testQuery,
+          customerProfile: activeProfile,
+          excludeAllergens: activeProfile.allergies
+        })
       });
-      setTestResults(results || []);
+      const data = await res.json();
+      setTestResults(data.results || []);
     } catch (err) {
       console.error('RAG test search failed:', err);
     } finally {

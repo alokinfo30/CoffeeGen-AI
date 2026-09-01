@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, BookOpen, Tag, Filter, X, Coffee, Layers } from 'lucide-react';
 import { RAGChunk } from '../types';
 import { RAG_KNOWLEDGE_BASE } from '../../server/ragKnowledgeBase';
-import { api } from '../utils/apiClient';
 
 interface RagKnowledgeViewerProps {
   isOpen: boolean;
@@ -16,9 +15,21 @@ export const RagKnowledgeViewer: React.FC<RagKnowledgeViewerProps> = ({ isOpen, 
 
   useEffect(() => {
     if (!isOpen) return;
-    api.getRagKnowledge().then((docs) => {
-      if (docs && docs.length > 0) setChunks(docs);
-    });
+    fetch('/api/rag/knowledge')
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) throw new Error('Non-JSON response');
+        return res.json();
+      })
+      .then((data) => {
+        if (data?.documents && data.documents.length > 0) {
+          setChunks(data.documents);
+        }
+      })
+      .catch(() => {
+        setChunks(RAG_KNOWLEDGE_BASE);
+      });
   }, [isOpen]);
 
   if (!isOpen) return null;

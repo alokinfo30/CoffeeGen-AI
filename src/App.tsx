@@ -34,8 +34,6 @@ import { RagKnowledgeViewer } from './components/RagKnowledgeViewer';
 import { ArchitectureInfoModal } from './components/ArchitectureInfoModal';
 import { LoyaltyTrackerWidget } from './components/LoyaltyTrackerWidget';
 
-import { api } from './utils/apiClient';
-
 export default function App() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>(MENU_ITEMS);
   const [profiles, setProfiles] = useState<CustomerProfile[]>(CUSTOMER_PROFILES);
@@ -74,16 +72,41 @@ export default function App() {
 
   // Fetch initial data with resilient fallback
   useEffect(() => {
-    api.getMenu().then((items) => {
-      if (items && items.length > 0) setMenuItems(items);
-    });
+    // 1. Fetch menu with robust content-type check
+    fetch('/api/menu')
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) throw new Error('HTML/Non-JSON response');
+        return res.json();
+      })
+      .then((data) => {
+        if (data?.items && data.items.length > 0) setMenuItems(data.items);
+      })
+      .catch(() => {
+        // Silently use embedded MENU_ITEMS if API endpoint is not running on same host
+        setMenuItems(MENU_ITEMS);
+      });
 
-    api.getProfiles().then((profs) => {
-      if (profs && profs.length > 0) {
-        setProfiles(profs);
-        setActiveProfile(profs[0]);
-      }
-    });
+    // 2. Fetch profiles with robust content-type check
+    fetch('/api/profiles')
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) throw new Error('HTML/Non-JSON response');
+        return res.json();
+      })
+      .then((data) => {
+        if (data?.profiles && data.profiles.length > 0) {
+          setProfiles(data.profiles);
+          setActiveProfile(data.profiles[0]);
+        }
+      })
+      .catch(() => {
+        // Silently use embedded CUSTOMER_PROFILES if API endpoint is not running on same host
+        setProfiles(CUSTOMER_PROFILES);
+        setActiveProfile(CUSTOMER_PROFILES[0]);
+      });
   }, []);
 
   // Cart operations
